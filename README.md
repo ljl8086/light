@@ -1,8 +1,8 @@
 # light
 轻量级的远程通信组件
 
-指南
-服务端
+## 指南
+### 服务端
   1. 导入依赖
 ```
 <dependency>
@@ -25,7 +25,7 @@ spring.light.zookeeper=192.168.0.238:2181
   4. 启动服务
   
   
-  客户端
+  ### 客户端
   1. 导入依赖
 ```
 <dependency>
@@ -50,3 +50,12 @@ spring.light.zookeeper=192.168.0.238:2181
     private IUserRemote userRemote;
   ```
   4. 启动服务
+
+### 功能
+- [x] Venus
+- [x] 序列化支持
+  - [x] Hessian
+  - [ ] Protbuffer
+- [x] 注册中心
+  - [ ] Zookeeper
+  - [X] Consul
