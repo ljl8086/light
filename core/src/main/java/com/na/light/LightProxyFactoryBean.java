@@ -97,7 +97,7 @@ public class LightProxyFactoryBean implements FactoryBean<Object>{
             HessianProxyFactoryBean bean = new HessianProxyFactoryBean();
             bean.setServiceInterface(serviceInterface);
             bean.setServiceUrl("http://"+serviceUrl+"/"+lightRpcService.value());
-            log.info("远程调用接口扫描成功：{}",lightRpcService.value());
+            log.info("远程调用接口扫描成功2：{}",lightRpcService.value());
             bean.prepare();
             return new ProxyFactory(serviceInterface, bean).getProxy(ClassUtils.getDefaultClassLoader());
         }
