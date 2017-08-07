@@ -21,7 +21,6 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.*;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
-import org.springframework.remoting.caucho.HessianServiceExporter;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -63,11 +62,14 @@ public class LightRpcServiceAutoConfiguration implements ApplicationContextAware
 
     @Bean
     public ZkClient zkClient(){
-        String zookeeperUrl = applicationContext.getEnvironment().getProperty("spring.light.zookeeper");
+        String zookeeperUrl = applicationContext.getEnvironment().getProperty("spring.light.zookeeper.url");
+        //单位：毫秒
+        Integer zookeeperTimeout = applicationContext.getEnvironment().getProperty("spring.light.zookeeper.timeout",Integer.class,30*1000);
+
         int port = applicationContext.getEnvironment().getProperty("server.port",int.class);
         String serverAddress = applicationContext.getEnvironment().getProperty("server.address");
 
-        ZkClient client = new ZkClient(zookeeperUrl);
+        ZkClient client = new ZkClient(zookeeperUrl,zookeeperTimeout);
 
         Map<String,RemoteServiceFactoryBean> factoryBeanMap = applicationContext.getBeansOfType(RemoteServiceFactoryBean.class);
         factoryBeanMap.forEach((key,item)->{
@@ -89,8 +91,11 @@ public class LightRpcServiceAutoConfiguration implements ApplicationContextAware
                 }
 
                 String ip = serverAddress!=null?serverAddress : getRealIp();
-
-                client.createEphemeral(root+"/"+serviceName+"/"+providers+"/"+ip+":"+port);
+                LightServiceNodeData data = new LightServiceNodeData();
+                data.setProjectName(lightRpcClient.url());
+                data.setVersion(1);
+                data.setInterfaceName(serviceName);
+                client.createEphemeral(root+"/"+serviceName+"/"+providers+"/"+ip+":"+port,data);
 
             }catch (Exception e){
                 log.error(e.getMessage(),e);
@@ -187,7 +192,7 @@ public class LightRpcServiceAutoConfiguration implements ApplicationContextAware
                 BeanDefinitionRegistry registry = (BeanDefinitionRegistry)context.getBeanFactory();
                 registerBean(registry,"/"+remoteName, LightHessianExporter.class,remoteObj);
 
-                log.info("RPC接口注册成功3[{}]",remoteName);
+                log.info("RPC接口注册成功[{}]",remoteName);
             }
             return beanDefinitions;
         }

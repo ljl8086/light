@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,8 +53,11 @@ public class LightRpcClientAutoConfiguration implements ApplicationContextAware 
 
     @Bean
     public ZkClient zkClient(){
-        String zookeeperUrl = applicationContext.getEnvironment().getProperty("spring.light.zookeeper");
-        ZkClient client = new ZkClient(zookeeperUrl);
+        String zookeeperUrl = applicationContext.getEnvironment().getProperty("spring.light.zookeeper.url");
+        //单位：毫秒
+        Integer zookeeperTimeout = applicationContext.getEnvironment().getProperty("spring.light.zookeeper.timeout",Integer.class,30*1000);
+
+        ZkClient client = new ZkClient(zookeeperUrl,zookeeperTimeout);
 
         Map<String,LightProxyFactoryBean> factoryBeanMap = applicationContext.getBeansOfType(LightProxyFactoryBean.class);
         factoryBeanMap.forEach((key,item)->{
@@ -62,11 +66,21 @@ public class LightRpcClientAutoConfiguration implements ApplicationContextAware 
                 String remote = "/light-rpc/" + lightRpcService.value() + "/providers";
                 if(client.exists(remote)) {
                     List<String> urls = client.getChildren(remote);
-                    item.freshUrl(urls);
+                    Map<String,LightServiceNodeData> children = new HashMap<>();
+                    urls.forEach(url->{
+                        LightServiceNodeData data = client.readData(remote+"/"+url);
+                        children.put(url,data);
+                    });
+                    item.freshUrl(children);
                 }
                 client.subscribeChildChanges(remote, ((parentPath, currentChilds) -> {
                     if(remote.equals(parentPath) && currentChilds!=null){
-                        item.freshUrl(currentChilds);
+                        Map<String,LightServiceNodeData> children = new HashMap<>();
+                        currentChilds.forEach(interfaceName->{
+                            LightServiceNodeData data = client.readData(remote+"/"+interfaceName);
+                            children.put(interfaceName,data);
+                        });
+                        item.freshUrl(children);
                     }
                 }));
             }catch (Exception e){

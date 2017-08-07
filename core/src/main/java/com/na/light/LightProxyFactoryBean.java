@@ -14,7 +14,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Map;
 
 /**
  *
@@ -22,35 +22,40 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class LightProxyFactoryBean implements FactoryBean<Object>{
     private Logger log = LoggerFactory.getLogger(this.getClass());
-    private CopyOnWriteArrayList<ServiceProxyEntry> proxyEntries = new CopyOnWriteArrayList<>();
+    private List<ServiceProxyEntry> proxyEntries = new ArrayList<>();
     private Class serviceInterface;
 
     private int index = 0;
 
-    public void addServiceUrl(String serviceUrl) {
-        this.proxyEntries.add(new ServiceProxyEntry(serviceUrl));
+    public void addServiceUrl(String interfaceName, LightServiceNodeData data) {
+        this.proxyEntries.add(new ServiceProxyEntry(interfaceName,data));
     }
 
     public Class getServiceInterface() {
         return serviceInterface;
     }
 
-    public void freshUrl(List<String> urls){
+    /**
+     * 刷新服务器列表。
+     * key 服务提供方ip地址及端口号,val 该节点存储的数据。
+     * @param children
+     */
+    public void freshUrl(Map<String,LightServiceNodeData> children){
         log.info("刷新服务器列表……");
         Iterator<ServiceProxyEntry> it = proxyEntries.iterator();
         while (it.hasNext()) {
             ServiceProxyEntry entry = it.next();
-            boolean isExist = urls.stream().anyMatch(url->{return url.equalsIgnoreCase(entry.getServiceUrl());});
+            boolean isExist = children.keySet().stream().anyMatch(interfaceName->{return interfaceName.equalsIgnoreCase(entry.getServiceUrl());});
             if(!isExist){
                 it.remove();
             }
         }
-        for (String url : urls){
-            boolean isExist = proxyEntries.stream().anyMatch(entity->{return entity.getServiceUrl().equalsIgnoreCase(url);});
+        children.forEach((interfaceName,data)->{
+            boolean isExist = proxyEntries.stream().anyMatch(entity->{return entity.getServiceUrl().equalsIgnoreCase(interfaceName);});
             if(!isExist){
-                this.addServiceUrl(url);
+                this.addServiceUrl(interfaceName,data);
             }
-        }
+        });
         log.info("服务器清单："+proxyEntries.toString());
     }
 
@@ -91,20 +96,21 @@ public class LightProxyFactoryBean implements FactoryBean<Object>{
             ServiceProxyEntry proxyEntry = LightProxyFactoryBean.this.proxyEntries.get(index++% proxyEntries.size());
             Object subject = proxyEntry.getServiceProxy();
             if(subject==null){
-                subject = createBean(proxyEntry.getServiceUrl());
+                subject = createBean(proxyEntry);
                 proxyEntry.setServiceProxy(subject);
             }
 
-            log.info("开始调用远程接口{}...",proxyEntry.getServiceUrl());
+            log.info("开始调用远程接口{}...",proxyEntry.getFullUrl());
             return subject;
         }
 
-        private Object createBean(String serviceUrl){
+        private Object createBean(ServiceProxyEntry proxyEntry){
+            LightServiceNodeData data = proxyEntry.getData();
             LightRpcService lightRpcService = (LightRpcService)serviceInterface.getAnnotation(LightRpcService.class);
             HessianProxyFactoryBean bean = new HessianProxyFactoryBean();
             bean.setServiceInterface(serviceInterface);
-            bean.setServiceUrl("http://"+serviceUrl+"/"+lightRpcService.value());
-            log.info("远程调用接口扫描成功：{}",lightRpcService.value());
+            bean.setServiceUrl(proxyEntry.getFullUrl(lightRpcService));
+            log.info("远程调用接口注册成功：{}",proxyEntry.getFullUrl(lightRpcService));
             bean.prepare();
             return new ProxyFactory(serviceInterface, bean).getProxy(ClassUtils.getDefaultClassLoader());
         }
@@ -114,13 +120,20 @@ public class LightProxyFactoryBean implements FactoryBean<Object>{
     private static class ServiceProxyEntry {
         private String serviceUrl;
         private Object serviceProxy;
+        private LightServiceNodeData data;
+        private String fullUrl;
 
-        public ServiceProxyEntry(String serviceUrl) {
+        public ServiceProxyEntry(String serviceUrl, LightServiceNodeData data) {
             this.serviceUrl = serviceUrl;
+            this.data = data;
         }
 
         public String getServiceUrl() {
             return serviceUrl;
+        }
+
+        public LightServiceNodeData getData() {
+            return data;
         }
 
         public Object getServiceProxy() {
@@ -136,6 +149,29 @@ public class LightProxyFactoryBean implements FactoryBean<Object>{
             return "ServiceProxyEntry{" +
                     "serviceUrl='" + serviceUrl + '\'' +
                     '}';
+        }
+
+        public String getFullUrl() {
+            return fullUrl;
+        }
+
+        public String getFullUrl(LightRpcService lightRpcService){
+            StringBuilder url = new StringBuilder("http://").append(this.getServiceUrl()).append("/");
+            if(data!=null && data.getProjectName()!=null){
+                if(data.getProjectName().indexOf("/")==0){
+                    url.append(data.getProjectName().substring(1));
+                }else {
+                    url.append(data.getProjectName());
+                }
+                url.append("/");
+            }
+            if(lightRpcService.value().indexOf("/")==0){
+                url.append(lightRpcService.value().substring(1));
+            }else {
+                url.append(lightRpcService.value());
+            }
+            this.fullUrl = url.toString();
+            return this.fullUrl;
         }
     }
 
