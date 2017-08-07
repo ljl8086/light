@@ -14,6 +14,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  *
@@ -21,7 +22,7 @@ import java.util.List;
  */
 public class LightProxyFactoryBean implements FactoryBean<Object>{
     private Logger log = LoggerFactory.getLogger(this.getClass());
-    private List<ServiceProxyEntry> proxyEntries = new ArrayList<>();
+    private CopyOnWriteArrayList<ServiceProxyEntry> proxyEntries = new CopyOnWriteArrayList<>();
     private Class serviceInterface;
 
     private int index = 0;
@@ -83,12 +84,18 @@ public class LightProxyFactoryBean implements FactoryBean<Object>{
         }
 
         private synchronized Object getSubject() {
+            if(proxyEntries.size()==0){
+                throw new RuntimeException("没有可用服务器……");
+            }
+
             ServiceProxyEntry proxyEntry = LightProxyFactoryBean.this.proxyEntries.get(index++% proxyEntries.size());
             Object subject = proxyEntry.getServiceProxy();
             if(subject==null){
                 subject = createBean(proxyEntry.getServiceUrl());
                 proxyEntry.setServiceProxy(subject);
             }
+
+            log.info("开始调用远程接口{}...",proxyEntry.getServiceUrl());
             return subject;
         }
 
