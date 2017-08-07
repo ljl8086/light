@@ -16,6 +16,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
+ *
  * Created by sunny on 2017/8/1 0001.
  */
 public class LightProxyFactoryBean implements FactoryBean<Object>{
@@ -77,9 +78,7 @@ public class LightProxyFactoryBean implements FactoryBean<Object>{
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             Object subject = getSubject();
 
-            System.out.println("====before====");
             Object result = method.invoke(subject, args);
-            System.out.println("====after====");
             return result;
         }
 
@@ -94,9 +93,11 @@ public class LightProxyFactoryBean implements FactoryBean<Object>{
         }
 
         private Object createBean(String serviceUrl){
+            LightRpcService lightRpcService = (LightRpcService)serviceInterface.getAnnotation(LightRpcService.class);
             HessianProxyFactoryBean bean = new HessianProxyFactoryBean();
             bean.setServiceInterface(serviceInterface);
-            bean.setServiceUrl("http://"+serviceUrl+"/userRemote");
+            bean.setServiceUrl("http://"+serviceUrl+"/"+lightRpcService.value());
+            log.info("远程调用接口扫描成功：{}",lightRpcService.value());
             bean.prepare();
             return new ProxyFactory(serviceInterface, bean).getProxy(ClassUtils.getDefaultClassLoader());
         }
