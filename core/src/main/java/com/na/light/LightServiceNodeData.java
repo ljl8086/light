@@ -7,28 +7,31 @@ import java.io.Serializable;
  * Created by sunny on 2017/8/7 0007.
  */
 public class LightServiceNodeData implements Serializable {
-    private String projectName;
-    private String interfaceName;
-    private int version;
-    private String password;
+    private final static long serialVersionUID = 7297706850337329870L;
 
-    public String getProjectName() {
-        return projectName;
+    private String contextPath;
+    private String group;
+    private String serviceName;
+    private int version;
+    private String token;
+
+    public String getContextPath() {
+        return contextPath;
     }
 
-    public void setProjectName(String projectName) {
-        if(projectName!=null && projectName.trim().length()>=0) {
-            this.projectName = projectName.trim();
+    public void setContextPath(String contextPath) {
+        if(contextPath !=null && contextPath.trim().length()>=0) {
+            this.contextPath = contextPath.trim();
         }
     }
 
-    public String getInterfaceName() {
-        return interfaceName;
+    public String getGroup() {
+        return group;
     }
 
-    public void setInterfaceName(String interfaceName) {
-        if(interfaceName!=null && interfaceName.trim().length()>=0) {
-            this.interfaceName = interfaceName.trim();
+    public void setGroup(String group) {
+        if(group !=null && group.trim().length()>=0) {
+            this.group = group.trim();
         }
     }
 
@@ -40,13 +43,23 @@ public class LightServiceNodeData implements Serializable {
         this.version = version;
     }
 
-    public String getPassword() {
-        return password;
+    public String getToken() {
+        return token;
     }
 
-    public void setPassword(String password) {
-        if(password!=null && password.trim().length()>=0) {
-            this.password = password.trim();
+    public void setToken(String token) {
+        if(token !=null && token.trim().length()>=0) {
+            this.token = token.trim();
+        }
+    }
+
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public void setServiceName(String serviceName) {
+        if(serviceName!=null && serviceName.trim().length()>=0) {
+            this.serviceName = serviceName.trim();
         }
     }
 }

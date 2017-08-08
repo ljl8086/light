@@ -28,6 +28,7 @@ import java.net.SocketException;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Created by sunny on 2017/8/2 0002.
@@ -68,6 +69,7 @@ public class LightRpcServiceAutoConfiguration implements ApplicationContextAware
 
         int port = applicationContext.getEnvironment().getProperty("server.port",int.class);
         String serverAddress = applicationContext.getEnvironment().getProperty("server.address");
+        String contextPath = applicationContext.getEnvironment().getProperty("server.context-path");
 
         ZkClient client = new ZkClient(zookeeperUrl,zookeeperTimeout);
 
@@ -92,9 +94,11 @@ public class LightRpcServiceAutoConfiguration implements ApplicationContextAware
 
                 String ip = serverAddress!=null?serverAddress : getRealIp();
                 LightServiceNodeData data = new LightServiceNodeData();
-                data.setProjectName(lightRpcClient.url());
+                data.setContextPath(lightRpcClient.group());
                 data.setVersion(1);
-                data.setInterfaceName(serviceName);
+                data.setGroup(lightRpcClient.group());
+                data.setContextPath(contextPath);
+                data.setToken(item.getToken());
                 client.createEphemeral(root+"/"+serviceName+"/"+providers+"/"+ip+":"+port,data);
 
             }catch (Exception e){
@@ -137,7 +141,7 @@ public class LightRpcServiceAutoConfiguration implements ApplicationContextAware
         }
     }
 
-    private void registerBean(BeanDefinitionRegistry registry, String name, Class<?> beanClass,Object obj){
+    private void registerBean(BeanDefinitionRegistry registry, String name, Class<?> beanClass,Object obj,String token){
         AnnotatedGenericBeanDefinition abd = new AnnotatedGenericBeanDefinition(beanClass);
 
         ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(abd);
@@ -146,7 +150,7 @@ public class LightRpcServiceAutoConfiguration implements ApplicationContextAware
         if(obj!=null) {
             MutablePropertyValues propertyValues = new MutablePropertyValues();
             propertyValues.add("service", obj);
-//            propertyValues.add("beanClassLoader", this.getClass().getClassLoader());
+            propertyValues.add("token",token);
             propertyValues.add("serviceInterface", obj.getClass().getInterfaces()[0]);
             abd.setPropertyValues(propertyValues);
         }
@@ -173,24 +177,26 @@ public class LightRpcServiceAutoConfiguration implements ApplicationContextAware
             Set<BeanDefinitionHolder> beanDefinitions =   super.doScan(basePackages);
             for (BeanDefinitionHolder holder : beanDefinitions) {
                 GenericBeanDefinition definition = (GenericBeanDefinition) holder.getBeanDefinition();
-
+                String token = UUID.randomUUID().toString().replace("-","");
                 Class remoteCls = null;
                 try {
                     remoteCls = Class.forName(definition.getBeanClassName());
                     definition.getPropertyValues().add("serviceInterface", remoteCls);
+                    definition.getPropertyValues().add("token",token);
                 } catch (ClassNotFoundException e) {
-                    e.printStackTrace();
+                    log.error(e.getMessage(),e);
                 }
 
                 LightRpcService rpcService = (LightRpcService)remoteCls.getAnnotation(LightRpcService.class);
                 String remoteName = rpcService.value().trim()=="" ? remoteCls.getName() : rpcService.value();
+                String group = rpcService.group().trim()=="" ? "" : "/"+rpcService.group();
 
                 definition.setBeanClass(RemoteServiceFactoryBean.class);
 
                 Object remoteObj = applicationContext.getBean(remoteCls);
                 ConfigurableApplicationContext context = (ConfigurableApplicationContext)applicationContext;
                 BeanDefinitionRegistry registry = (BeanDefinitionRegistry)context.getBeanFactory();
-                registerBean(registry,"/"+remoteName, LightHessianExporter.class,remoteObj);
+                registerBean(registry,group+"/"+remoteName, LightHessianExporter.class,remoteObj,"");
 
                 log.info("RPC接口注册成功[{}]",remoteName);
             }

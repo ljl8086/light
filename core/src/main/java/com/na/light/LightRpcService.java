@@ -18,8 +18,8 @@ public @interface LightRpcService {
     String value() default "";
 
     /**
-     * 访问路径。
+     * 分组。
      * @return
      */
-    String url() default "";
+    String group() default "";
 }

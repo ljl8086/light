@@ -54,6 +54,7 @@ public class LightRpcClientAutoConfiguration implements ApplicationContextAware 
     @Bean
     public ZkClient zkClient(){
         String zookeeperUrl = applicationContext.getEnvironment().getProperty("spring.light.zookeeper.url");
+        String contextPath = applicationContext.getEnvironment().getProperty("server.context-path");
         //单位：毫秒
         Integer zookeeperTimeout = applicationContext.getEnvironment().getProperty("spring.light.zookeeper.timeout",Integer.class,30*1000);
 

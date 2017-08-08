@@ -157,14 +157,24 @@ public class LightProxyFactoryBean implements FactoryBean<Object>{
 
         public String getFullUrl(LightRpcService lightRpcService){
             StringBuilder url = new StringBuilder("http://").append(this.getServiceUrl()).append("/");
-            if(data!=null && data.getProjectName()!=null){
-                if(data.getProjectName().indexOf("/")==0){
-                    url.append(data.getProjectName().substring(1));
+            if(data!=null && data.getContextPath()!=null){
+                if(data.getContextPath().indexOf("/")==0){
+                    url.append(data.getContextPath().substring(1));
                 }else {
-                    url.append(data.getProjectName());
+                    url.append(data.getContextPath());
                 }
                 url.append("/");
             }
+
+            if(data!=null && data.getGroup()!=null){
+                if(data.getGroup().indexOf("/")==0){
+                    url.append(data.getGroup().substring(1));
+                }else {
+                    url.append(data.getGroup());
+                }
+                url.append("/");
+            }
+
             if(lightRpcService.value().indexOf("/")==0){
                 url.append(lightRpcService.value().substring(1));
             }else {
