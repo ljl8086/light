@@ -30,7 +30,7 @@ import java.util.Set;
 @Configuration
 @EnableConfigurationProperties()
 public class LightRpcClientAutoConfiguration implements ApplicationContextAware {
-    private Logger log = LoggerFactory.getLogger(this.getClass());
+    private static final Logger log = LoggerFactory.getLogger(LightRpcClientAutoConfiguration.class);
     private ApplicationContext applicationContext;
 
     @Override
@@ -107,7 +107,7 @@ public class LightRpcClientAutoConfiguration implements ApplicationContextAware 
                 try {
                     definition.getPropertyValues().add("serviceInterface", Class.forName(definition.getBeanClassName()));
                 } catch (ClassNotFoundException e) {
-                    e.printStackTrace();
+                    log.error(e.getMessage(),e);
                 }
                 definition.setBeanClass(LightProxyFactoryBean.class);
             }

@@ -196,7 +196,7 @@ public class LightRpcServiceAutoConfiguration implements ApplicationContextAware
                 Object remoteObj = applicationContext.getBean(remoteCls);
                 ConfigurableApplicationContext context = (ConfigurableApplicationContext)applicationContext;
                 BeanDefinitionRegistry registry = (BeanDefinitionRegistry)context.getBeanFactory();
-                registerBean(registry,group+"/"+remoteName, LightHessianExporter.class,remoteObj,"");
+                registerBean(registry,group+"/"+remoteName, LightHessianExporter.class,remoteObj,token);
 
                 log.info("RPC接口注册成功[{}]",remoteName);
             }

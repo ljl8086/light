@@ -110,6 +110,8 @@ public class LightProxyFactoryBean implements FactoryBean<Object>{
             HessianProxyFactoryBean bean = new HessianProxyFactoryBean();
             bean.setServiceInterface(serviceInterface);
             bean.setServiceUrl(proxyEntry.getFullUrl(lightRpcService));
+            bean.setPassword(data.getToken());
+            bean.setUsername("test");
             log.info("远程调用接口注册成功：{}",proxyEntry.getFullUrl(lightRpcService));
             bean.prepare();
             return new ProxyFactory(serviceInterface, bean).getProxy(ClassUtils.getDefaultClassLoader());
@@ -118,9 +120,21 @@ public class LightProxyFactoryBean implements FactoryBean<Object>{
 
 
     private static class ServiceProxyEntry {
+        /**
+         * 提供服务方的IP地址+端口号。
+         */
         private String serviceUrl;
+        /**
+         * 代理对象。
+         */
         private Object serviceProxy;
+        /**
+         * 接口服务端的相关调用数据。
+         */
         private LightServiceNodeData data;
+        /**
+         * 完整的调用地址。
+         */
         private String fullUrl;
 
         public ServiceProxyEntry(String serviceUrl, LightServiceNodeData data) {
