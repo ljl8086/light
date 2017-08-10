@@ -12,11 +12,9 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 
@@ -25,8 +23,6 @@ import java.util.Set;
 /**
  * Created by sunny on 2017/8/2 0002.
  */
-@Configuration
-@EnableConfigurationProperties()
 public class LightRpcClientAutoConfiguration implements ApplicationContextAware,BeanFactoryPostProcessor {
     private static final Logger log = LoggerFactory.getLogger(LightRpcClientAutoConfiguration.class);
     private ApplicationContext applicationContext;

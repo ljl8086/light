@@ -12,7 +12,6 @@ import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.*;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -27,8 +26,6 @@ import java.util.UUID;
  * 服务提供方自动扫描组件。
  * Created by sunny on 2017/8/2 0002.
  */
-@Configuration
-@EnableConfigurationProperties()
 public class LightRpcServiceAutoConfiguration implements ApplicationContextAware,BeanFactoryPostProcessor {
     private Logger log = LoggerFactory.getLogger(this.getClass());
     private ApplicationContext applicationContext;

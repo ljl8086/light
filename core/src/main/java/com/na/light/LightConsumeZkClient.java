@@ -18,7 +18,6 @@ import java.util.Map;
  * 服务消费方配置中心组件。
  * Created by sunny on 2017/8/10 0010.
  */
-@Component
 public class LightConsumeZkClient {
     private Logger log = LoggerFactory.getLogger(this.getClass());
     @Autowired

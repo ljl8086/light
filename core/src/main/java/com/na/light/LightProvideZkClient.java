@@ -15,7 +15,6 @@ import java.util.Map;
  * 服务提供方向配置中心注册组件。
  * Created by sunny on 2017/8/10 0010.
  */
-@Component
 public class LightProvideZkClient {
     private Logger log = LoggerFactory.getLogger(this.getClass());
     @Autowired
