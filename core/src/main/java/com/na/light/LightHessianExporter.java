@@ -1,4 +1,4 @@
-package com.na.light.hessian;
+package com.na.light;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +12,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
- * Created by Administrator on 2017/8/4 0004.
+ * 增加权限验证。
+ * Created by sunny on 2017/8/4 0004.
  */
 public class LightHessianExporter extends HessianServiceExporter {
     private final static Logger log = LoggerFactory.getLogger(LightHessianExporter.class);
@@ -29,7 +30,6 @@ public class LightHessianExporter extends HessianServiceExporter {
 
     @Override
     public void handleRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        log.info("=================--222------------------------===============");
         if(token!=null) {
             String tempToken = getRequestToken(request);
             if(!token.equals(tempToken)){

@@ -1,13 +1,10 @@
 package com.na.light;
 
-import com.na.light.hessian.LightProxyFactoryBean;
-import com.na.light.util.IpUtils;
 import org.I0Itec.zkclient.ZkClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.HashMap;
@@ -32,7 +29,7 @@ public class LightConsumeZkClient {
         //单位：毫秒
         Integer zookeeperTimeout = applicationContext.getEnvironment().getProperty("spring.light.zookeeper.timeout",Integer.class,30*1000);
 
-        Map<String,LightProxyFactoryBean> factoryBeanMap = applicationContext.getBeansOfType(LightProxyFactoryBean.class);
+        Map<String,LightConsumeFactoryBean> factoryBeanMap = applicationContext.getBeansOfType(LightConsumeFactoryBean.class);
         factoryBeanMap.forEach((key,item)->{
             try {
                 LightRpcService lightRpcService = (LightRpcService) item.getServiceInterface().getAnnotation(LightRpcService.class);

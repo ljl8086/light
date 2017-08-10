@@ -1,8 +1,6 @@
-package com.na.light.hessian;
+package com.na.light;
 
 
-import com.na.light.LightRpcService;
-import com.na.light.LightServiceNodeData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.framework.ProxyFactory;
@@ -19,10 +17,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
+ * 服务消费者spring工厂类。
  * Created by sunny on 2017/8/1 0001.
  */
-public class LightProxyFactoryBean implements FactoryBean<Object>{
+public class LightConsumeFactoryBean implements FactoryBean<Object>{
     private Logger log = LoggerFactory.getLogger(this.getClass());
     private List<ServiceProxyEntry> proxyEntries = new ArrayList<>();
     private Class serviceInterface;
@@ -95,7 +93,7 @@ public class LightProxyFactoryBean implements FactoryBean<Object>{
                 throw new RuntimeException("没有可用服务器……");
             }
 
-            ServiceProxyEntry proxyEntry = LightProxyFactoryBean.this.proxyEntries.get(index++% proxyEntries.size());
+            ServiceProxyEntry proxyEntry = LightConsumeFactoryBean.this.proxyEntries.get(index++% proxyEntries.size());
             Object subject = proxyEntry.getServiceProxy();
             if(subject==null){
                 subject = createBean(proxyEntry);

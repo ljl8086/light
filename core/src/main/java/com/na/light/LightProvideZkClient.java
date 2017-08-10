@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.Map;
@@ -33,7 +32,7 @@ public class LightProvideZkClient {
         String serverAddress = applicationContext.getEnvironment().getProperty("server.address");
         String contextPath = applicationContext.getEnvironment().getProperty("server.context-path");
 
-        Map<String,RemoteServiceFactoryBean> factoryBeanMap = applicationContext.getBeansOfType(RemoteServiceFactoryBean.class);
+        Map<String,LightProvideFactoryBean> factoryBeanMap = applicationContext.getBeansOfType(LightProvideFactoryBean.class);
         factoryBeanMap.forEach((key,item)->{
             try {
                 LightRpcService lightRpcClient = (LightRpcService) item.getServiceInterface().getAnnotation(LightRpcService.class);

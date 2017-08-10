@@ -5,7 +5,7 @@ import org.springframework.beans.factory.FactoryBean;
 /**
  * Created by sunny on 2017/8/3 0003.
  */
-public class RemoteServiceFactoryBean implements FactoryBean<Object> {
+public class LightProvideFactoryBean implements FactoryBean<Object> {
     private Class serviceInterface;
     /**
      * 限制只有知道token的用户，才能访问该接口。
