@@ -1,6 +1,8 @@
-package com.na.light;
+package com.na.light.hessian;
 
 
+import com.na.light.LightRpcService;
+import com.na.light.LightServiceNodeData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.framework.ProxyFactory;
