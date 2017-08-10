@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.annotation.AnnotatedGenericBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionReaderUtils;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
@@ -21,6 +22,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.*;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
+import org.springframework.web.context.support.GenericWebApplicationContext;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -35,7 +37,7 @@ import java.util.UUID;
  */
 @Configuration
 @EnableConfigurationProperties()
-public class LightRpcServiceAutoConfiguration implements ApplicationContextAware {
+public class LightRpcServiceAutoConfiguration implements ApplicationContextAware,BeanFactoryPostProcessor,BeanPostProcessor{
     private Logger log = LoggerFactory.getLogger(this.getClass());
     private ApplicationContext applicationContext;
 
@@ -48,18 +50,24 @@ public class LightRpcServiceAutoConfiguration implements ApplicationContextAware
         this.applicationContext = applicationContext;
     }
 
-    @Bean
-    public BeanFactoryPostProcessor beanFactoryPostProcessor() {
-        return new BeanFactoryPostProcessor() {
-            @Override
-            public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
-                Scanner scanner = new Scanner((BeanDefinitionRegistry) beanFactory);
-                scanner.setResourceLoader(applicationContext);
-                String scan = applicationContext.getEnvironment().getProperty("spring.light.scan");
-                scanner.scan(scan);
-            }
-        };
-    }
+//    @Bean
+//    public BeanFactoryPostProcessor beanFactoryPostProcessor() {
+//        return new BeanFactoryPostProcessor() {
+//            @Override
+//            public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+//                Scanner scanner = new Scanner((BeanDefinitionRegistry) beanFactory);
+//                scanner.setResourceLoader(applicationContext);
+//                String scan = applicationContext.getEnvironment().getProperty("spring.light.scan");
+//                if(scan!=null && scan.trim().length()>0) {
+//                    scanner.scan(scan.split(","));
+//                }
+//
+////                beanFactory.
+////                GenericWebApplicationContext context = (GenericWebApplicationContext)applicationContext;
+////                registerBean(applicationContext,"zkClient",ZkClient.class,null,null);
+//            }
+//        };
+//    }
 
     @Bean
     public ZkClient zkClient(){
@@ -71,7 +79,7 @@ public class LightRpcServiceAutoConfiguration implements ApplicationContextAware
         String serverAddress = applicationContext.getEnvironment().getProperty("server.address");
         String contextPath = applicationContext.getEnvironment().getProperty("server.context-path");
 
-        ZkClient client = new ZkClient(zookeeperUrl,zookeeperTimeout);
+        ZkClient client = getZkClient(zookeeperUrl,zookeeperTimeout);
 
         Map<String,RemoteServiceFactoryBean> factoryBeanMap = applicationContext.getBeansOfType(RemoteServiceFactoryBean.class);
         factoryBeanMap.forEach((key,item)->{
@@ -108,6 +116,16 @@ public class LightRpcServiceAutoConfiguration implements ApplicationContextAware
         return client;
     }
 
+    private ZkClient getZkClient(String zookeeperUrl, Integer zookeeperTimeout) {
+        ZkClient client = null;
+        try {
+            client = applicationContext.getBean(ZkClient.class);
+        }catch (Exception e){
+            client = new ZkClient(zookeeperUrl,zookeeperTimeout);
+        }
+        return client;
+    }
+
     public static String getRealIp() throws SocketException {
         String localip = null;// 本地IP，如果没有配置外网IP则返回它
         String netip = null;// 外网IP
@@ -141,7 +159,10 @@ public class LightRpcServiceAutoConfiguration implements ApplicationContextAware
         }
     }
 
-    private void registerBean(BeanDefinitionRegistry registry, String name, Class<?> beanClass,Object obj,String token){
+    private void registerBean(ApplicationContext applicationContext, String name, Class<?> beanClass,Object obj,String token){
+        ConfigurableApplicationContext context = (ConfigurableApplicationContext)applicationContext;
+        BeanDefinitionRegistry registry = (BeanDefinitionRegistry)context.getBeanFactory();
+
         AnnotatedGenericBeanDefinition abd = new AnnotatedGenericBeanDefinition(beanClass);
 
         ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(abd);
@@ -161,6 +182,28 @@ public class LightRpcServiceAutoConfiguration implements ApplicationContextAware
 
         BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(abd, beanName);
         BeanDefinitionReaderUtils.registerBeanDefinition(definitionHolder, registry);
+    }
+
+    @Override
+    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+        Scanner scanner = new Scanner((BeanDefinitionRegistry) beanFactory);
+        scanner.setResourceLoader(applicationContext);
+        String scan = applicationContext.getEnvironment().getProperty("spring.light.scan");
+        if(scan!=null && scan.trim().length()>0) {
+            scanner.scan(scan.split(","));
+        }
+    }
+
+    @Override
+    public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+        System.out.println("-----------------postProcessBeforeInitialization------------------------");
+        return null;
+    }
+
+    @Override
+    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+        System.out.println("---------------postProcessAfterInitialization--------------------------");
+        return null;
     }
 
 
@@ -194,11 +237,9 @@ public class LightRpcServiceAutoConfiguration implements ApplicationContextAware
                 definition.setBeanClass(RemoteServiceFactoryBean.class);
 
                 Object remoteObj = applicationContext.getBean(remoteCls);
-                ConfigurableApplicationContext context = (ConfigurableApplicationContext)applicationContext;
-                BeanDefinitionRegistry registry = (BeanDefinitionRegistry)context.getBeanFactory();
-                registerBean(registry,group+"/"+remoteName, LightHessianExporter.class,remoteObj,token);
+                registerBean(applicationContext,group+"/"+remoteName, LightHessianExporter.class,remoteObj,token);
 
-                log.info("RPC接口注册成功[{}]",remoteName);
+                log.info("RPC接口注册成功1[{}]",remoteName);
             }
             return beanDefinitions;
         }

@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.remoting.caucho.HessianServiceExporter;
 import org.springframework.util.Base64Utils;
+import org.springframework.util.ClassUtils;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -22,7 +23,8 @@ public class LightHessianExporter extends HessianServiceExporter {
 
     @Override
     protected ClassLoader getBeanClassLoader() {
-        return this.getClass().getClassLoader();
+//        return this.getClass().getClassLoader();
+        return ClassUtils.getDefaultClassLoader();
     }
 
     @Override

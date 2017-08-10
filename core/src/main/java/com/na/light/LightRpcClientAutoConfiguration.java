@@ -46,7 +46,9 @@ public class LightRpcClientAutoConfiguration implements ApplicationContextAware 
                 Scanner scanner = new Scanner((BeanDefinitionRegistry) beanFactory);
                 scanner.setResourceLoader(applicationContext);
                 String scan = applicationContext.getEnvironment().getProperty("spring.light.scan");
-                scanner.scan(scan);
+                if(scan!=null && scan.trim().length()>0) {
+                    scanner.scan(scan.split(","));
+                }
             }
         };
     }
@@ -58,7 +60,7 @@ public class LightRpcClientAutoConfiguration implements ApplicationContextAware 
         //单位：毫秒
         Integer zookeeperTimeout = applicationContext.getEnvironment().getProperty("spring.light.zookeeper.timeout",Integer.class,30*1000);
 
-        ZkClient client = new ZkClient(zookeeperUrl,zookeeperTimeout);
+        final ZkClient client = getZkClient(zookeeperUrl, zookeeperTimeout);
 
         Map<String,LightProxyFactoryBean> factoryBeanMap = applicationContext.getBeansOfType(LightProxyFactoryBean.class);
         factoryBeanMap.forEach((key,item)->{
@@ -88,6 +90,16 @@ public class LightRpcClientAutoConfiguration implements ApplicationContextAware 
                 log.error(e.getMessage(),e);
             }
         });
+        return client;
+    }
+
+    private ZkClient getZkClient(String zookeeperUrl, Integer zookeeperTimeout) {
+        ZkClient client = null;
+        try {
+            client = applicationContext.getBean(ZkClient.class);
+        }catch (Exception e){
+            client = new ZkClient(zookeeperUrl,zookeeperTimeout);
+        }
         return client;
     }
 
