@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.na.light.LightConsumeAutoConfiguration,com.na.light.LightProvideZkClient
+com.na.light.LightProvideAutoConfiguration,com.na.light.LightProvideZkClient
