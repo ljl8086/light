@@ -23,11 +23,6 @@ public class LightProvideZkClient {
 
     @PostConstruct
     public void init(){
-
-        String zookeeperUrl = applicationContext.getEnvironment().getProperty("spring.light.zookeeper.url");
-        //单位：毫秒
-        Integer zookeeperTimeout = applicationContext.getEnvironment().getProperty("spring.light.zookeeper.timeout",Integer.class,30*1000);
-
         int port = applicationContext.getEnvironment().getProperty("server.port",int.class);
         String serverAddress = applicationContext.getEnvironment().getProperty("server.address");
         String contextPath = applicationContext.getEnvironment().getProperty("server.context-path");
@@ -39,7 +34,6 @@ public class LightProvideZkClient {
                 String root = "/light-rpc";
                 String serviceName = lightRpcClient.value().trim().length()==0 ? item.getServiceInterface().getSimpleName() : lightRpcClient.value();
                 String providers = "providers";
-
 
                 if(!zkClient.exists(root)) {
                     zkClient.createPersistent(root);
