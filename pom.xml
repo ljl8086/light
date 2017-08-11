@@ -22,7 +22,13 @@
     </parent>
 
     <url></url>
-    <name>spring-boot-starter-light-client</name>
+    <name>light-parent</name>
+
+    <scm>
+        <connection>scm:git:https://github.com/ljl8086/light.git</connection>
+        <url>https://github.com/ljl8086/light</url>
+        <developerConnection>scm:git:https://github.com/ljl8086/light.git</developerConnection>
+    </scm>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -161,6 +167,17 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
                 <version>2.8.2</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.5.3</version>
+                <configuration>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                    <useReleaseProfile>false</useReleaseProfile>
+                    <releaseProfiles>release</releaseProfiles>
+                    <goals>deploy</goals>
+                </configuration>
             </plugin>
 
         </plugins>
