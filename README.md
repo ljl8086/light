@@ -26,7 +26,7 @@ spring.light.zookeeper.timeout=5000       ##连接超时时间
   4. 启动服务
   
   
-  ### 客户端
+### 客户端
   1. 导入依赖
 ```
 <dependency>
