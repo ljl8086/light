@@ -13,14 +13,15 @@
 ```
   2. 标记远程接口服务(必须要有接口，该标记标注在实现类上)
   ```
-  @LightRpcService("userRemote")
+@LightRpcService("userRemote")
 public class UserRemoteImpl implements IUserRemote {
   ```
   3. 增加相应配置
   ```
-spring.light.scan=com.na.manager.remote   ##远程接口目录
-spring.light.zookeeper=192.168.0.238:2181
-  ```
+spring.light.scan=com.na.manager.remote   ##远程接口目录,多个用,隔开
+spring.light.zookeeper.url=192.168.0.238:2181
+spring.light.zookeeper.timeout=5000       ##连接超时时间
+  ```
   
   4. 启动服务
   
@@ -34,7 +35,7 @@ spring.light.zookeeper=192.168.0.238:2181
   <version>1.0-SNAPSHOT</version>
 </dependency>
 ```
-  2. 标记远程接口服务(必须要有接口，该标记标注在实现类上)
+  2. 标记远程接口服务(标记标注在接口上)
   ```
 @LightRpcService("userRemote")
 public interface IUserRemote {
@@ -42,7 +43,8 @@ public interface IUserRemote {
   3. 增加相应配置
   ```
 spring.light.scan=com.na.manager.remote   ##远程接口目录
-spring.light.zookeeper=192.168.0.238:2181
+spring.light.zookeeper.url=192.168.0.238:2181
+spring.light.zookeeper.timeout=5000       ##连接超时时间
   ```
   4. 调用服务
   ```
