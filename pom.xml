@@ -5,7 +5,7 @@
     <groupId>com.na.light</groupId>
     <artifactId>light</artifactId>
     <packaging>pom</packaging>
-    <version>1.0</version>
+    <version>1.1-SNAPSHOT</version>
     <modules>
         <module>spring-boot-starter-light-server</module>
         <module>spring-boot-starter-light-client</module>
@@ -27,7 +27,7 @@
         <url>https://github.com/ljl8086/light</url>
         <developerConnection>scm:git:https://github.com/ljl8086/light.git</developerConnection>
       <tag>light-1.0</tag>
-  </scm>
+    </scm>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
