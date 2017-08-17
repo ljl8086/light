@@ -1,11 +1,13 @@
 package com.na.light;
 
 import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 
 /**
  * Created by sunny on 2017/8/3 0003.
  */
-public class LightProvideFactoryBean implements FactoryBean<Object> {
+@Deprecated
+public class LightProvideFactoryBean implements FactoryBean<Object>  {
     private Class serviceInterface;
     /**
      * 限制只有知道token的用户，才能访问该接口。

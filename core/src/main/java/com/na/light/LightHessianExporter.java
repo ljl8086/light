@@ -21,6 +21,10 @@ public class LightHessianExporter extends HessianServiceExporter {
      * 限制只有知道token的用户，才能访问该接口。
      */
     private String token;
+    /**
+     * 代理类的原始类。
+     */
+    private Class originalServiceCls;
 
     @Override
     protected ClassLoader getBeanClassLoader() {
@@ -55,5 +59,17 @@ public class LightHessianExporter extends HessianServiceExporter {
 
     public void setToken(String token) {
         this.token = token;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public Class getOriginalServiceCls() {
+        return originalServiceCls;
+    }
+
+    public void setOriginalServiceCls(Class originalServiceCls) {
+        this.originalServiceCls = originalServiceCls;
     }
 }

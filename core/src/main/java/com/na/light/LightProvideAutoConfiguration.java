@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.AnnotatedGenericBeanDefiniti
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.*;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -32,46 +33,20 @@ public class LightProvideAutoConfiguration implements ApplicationContextAware,Be
     private ScopeMetadataResolver scopeMetadataResolver = new AnnotationScopeMetadataResolver();
     private BeanNameGenerator beanNameGenerator = new AnnotationBeanNameGenerator();
 
-
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
     }
 
-    private void registerBean(ApplicationContext applicationContext, String name, Class<?> beanClass,Object obj,String token){
-        ConfigurableApplicationContext context = (ConfigurableApplicationContext)applicationContext;
-        BeanDefinitionRegistry registry = (BeanDefinitionRegistry)context.getBeanFactory();
-
-        AnnotatedGenericBeanDefinition abd = new AnnotatedGenericBeanDefinition(beanClass);
-
-        ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(abd);
-        abd.setScope(scopeMetadata.getScopeName());
-
-        if(obj!=null) {
-            MutablePropertyValues propertyValues = new MutablePropertyValues();
-            propertyValues.add("service", obj);
-            propertyValues.add("token",token);
-            propertyValues.add("serviceInterface", obj.getClass().getInterfaces()[0]);
-            abd.setPropertyValues(propertyValues);
-        }
-        // 可以自动生成name
-        String beanName = (name != null ? name : this.beanNameGenerator.generateBeanName(abd, registry));
-
-        AnnotationConfigUtils.processCommonDefinitionAnnotations(abd);
-
-        BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(abd, beanName);
-        BeanDefinitionReaderUtils.registerBeanDefinition(definitionHolder, registry);
-    }
-
     @Override
     public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
         Scanner scanner = new Scanner((BeanDefinitionRegistry) beanFactory);
-        scanner.setResourceLoader(applicationContext);
         String scan = applicationContext.getEnvironment().getProperty("spring.light.scan");
         if(scan!=null && scan.trim().length()>0) {
             scanner.scan(scan.split(","));
         }
 
+        //注册zkclient
         String zookeeperUrl = applicationContext.getEnvironment().getProperty("spring.light.zookeeper.url");
         //单位：毫秒
         Integer zookeeperTimeout = applicationContext.getEnvironment().getProperty("spring.light.zookeeper.timeout",Integer.class,30*1000);
@@ -100,27 +75,40 @@ public class LightProvideAutoConfiguration implements ApplicationContextAware,Be
         public Set<BeanDefinitionHolder> doScan(String... basePackages) {
             Set<BeanDefinitionHolder> beanDefinitions =   super.doScan(basePackages);
             for (BeanDefinitionHolder holder : beanDefinitions) {
-                GenericBeanDefinition definition = (GenericBeanDefinition) holder.getBeanDefinition();
-                String token = UUID.randomUUID().toString().replace("-","");
-                Class remoteCls = null;
                 try {
-                    remoteCls = Class.forName(definition.getBeanClassName());
-                    definition.getPropertyValues().add("serviceInterface", remoteCls);
-                    definition.getPropertyValues().add("token",token);
+                    GenericBeanDefinition definition = (GenericBeanDefinition) holder.getBeanDefinition();
+                    String token = UUID.randomUUID().toString().replace("-","");
+                    Class remoteCls = remoteCls = Class.forName(definition.getBeanClassName());;
+
+                    definition.setAutowireCandidate(true);
+                    definition.setAutowireMode(GenericBeanDefinition.AUTOWIRE_BY_TYPE);
+
+                    LightRpcService rpcService = (LightRpcService)remoteCls.getAnnotation(LightRpcService.class);
+                    String remoteName = rpcService.value().trim()=="" ? remoteCls.getName() : rpcService.value();
+                    String group = rpcService.group().trim()=="" ? "" : "/"+rpcService.group();
+
+                    Object remoteObj = new RuntimeBeanReference(holder.getBeanName());
+                    String name = group+"/"+remoteName;
+
+                    ConfigurableApplicationContext context = (ConfigurableApplicationContext)applicationContext;
+                    BeanDefinitionRegistry registry = (BeanDefinitionRegistry)context.getBeanFactory();
+                    AnnotatedGenericBeanDefinition abd = new AnnotatedGenericBeanDefinition(LightHessianExporter.class);
+                    abd.setPropertyValues(
+                            new MutablePropertyValues()
+                            .add("service", remoteObj)
+                            .add("token",token)
+                            .add("originalServiceCls",remoteCls)
+                            .add("serviceInterface", remoteCls.getInterfaces()[0])
+                    );
+                    // 可以自动生成name
+                    String beanName = (name != null ? name : LightProvideAutoConfiguration.this.beanNameGenerator.generateBeanName(abd, registry));
+                    AnnotationConfigUtils.processCommonDefinitionAnnotations(abd);
+                    BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(abd, beanName);
+                    BeanDefinitionReaderUtils.registerBeanDefinition(definitionHolder, registry);
+                    log.info("RPC接口spring上下文注册成功[{}]",remoteName);
                 } catch (ClassNotFoundException e) {
                     log.error(e.getMessage(),e);
                 }
-
-                LightRpcService rpcService = (LightRpcService)remoteCls.getAnnotation(LightRpcService.class);
-                String remoteName = rpcService.value().trim()=="" ? remoteCls.getName() : rpcService.value();
-                String group = rpcService.group().trim()=="" ? "" : "/"+rpcService.group();
-
-                definition.setBeanClass(LightProvideFactoryBean.class);
-
-                Object remoteObj = applicationContext.getBean(remoteCls);
-                registerBean(applicationContext,group+"/"+remoteName, LightHessianExporter.class,remoteObj,token);
-
-                log.info("RPC接口注册成功[{}]",remoteName);
             }
             return beanDefinitions;
         }

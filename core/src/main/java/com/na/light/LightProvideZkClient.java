@@ -27,10 +27,10 @@ public class LightProvideZkClient {
         String serverAddress = applicationContext.getEnvironment().getProperty("server.address");
         String contextPath = applicationContext.getEnvironment().getProperty("server.context-path");
 
-        Map<String,LightProvideFactoryBean> factoryBeanMap = applicationContext.getBeansOfType(LightProvideFactoryBean.class);
+        Map<String,LightHessianExporter> factoryBeanMap = applicationContext.getBeansOfType(LightHessianExporter.class);
         factoryBeanMap.forEach((key,item)->{
             try {
-                LightRpcService lightRpcClient = (LightRpcService) item.getServiceInterface().getAnnotation(LightRpcService.class);
+                LightRpcService lightRpcClient = (LightRpcService) item.getOriginalServiceCls().getAnnotation(LightRpcService.class);
                 String root = "/light-rpc";
                 String serviceName = lightRpcClient.value().trim().length()==0 ? item.getServiceInterface().getSimpleName() : lightRpcClient.value();
                 String providers = "providers";
