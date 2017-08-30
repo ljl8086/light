@@ -52,6 +52,8 @@ public class LightProvideZkClient {
                 data.setGroup(lightRpcClient.group());
                 data.setContextPath(contextPath);
                 data.setToken(item.getToken());
+
+                zkClient.delete(root+"/"+serviceName+"/"+providers+"/"+ip+":"+port);
                 zkClient.createEphemeral(root+"/"+serviceName+"/"+providers+"/"+ip+":"+port,data);
                 log.info("向配置中心注册服务提供方成功");
             }catch (Exception e){

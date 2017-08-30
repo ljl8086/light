@@ -47,6 +47,8 @@ public class LightConsumeZkClient {
                 if(!zkClient.exists(root+"/"+serviceName+"/"+consume)){
                     zkClient.createPersistent(root+"/"+serviceName+"/"+consume);
                 }
+
+                zkClient.delete(root+"/"+serviceName+"/"+consume+"/"+ip);
                 zkClient.createEphemeral(root+"/"+serviceName+"/"+consume+"/"+ip);
 
                 if(zkClient.exists(remote)) {
