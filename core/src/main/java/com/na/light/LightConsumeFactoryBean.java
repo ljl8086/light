@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -28,7 +29,7 @@ public class LightConsumeFactoryBean implements FactoryBean<Object>{
     private Class serviceInterface;
     private ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    private int index = 0;
+    private Integer index = 0;
 
     public void addServiceUrl(String interfaceName, LightServiceNodeData data) {
         lock.writeLock().lock();
@@ -111,8 +112,13 @@ public class LightConsumeFactoryBean implements FactoryBean<Object>{
                 if (proxyEntries.size() == 0) {
                     throw new RuntimeException("没有可用服务器……");
                 }
+                ServiceProxyEntry proxyEntry = null;
 
-                ServiceProxyEntry proxyEntry = LightConsumeFactoryBean.this.proxyEntries.get(index++ % proxyEntries.size());
+                synchronized (index) {
+                    index = index++ % proxyEntries.size();
+                    proxyEntry = LightConsumeFactoryBean.this.proxyEntries.get(index++ % proxyEntries.size());
+                }
+
                 Object subject = proxyEntry.getServiceProxy();
                 if (subject == null) {
                     subject = createBean(proxyEntry);
