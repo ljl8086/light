@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * 服务消费者spring工厂类。
@@ -24,11 +26,17 @@ public class LightConsumeFactoryBean implements FactoryBean<Object>{
     private Logger log = LoggerFactory.getLogger(this.getClass());
     private List<ServiceProxyEntry> proxyEntries = new ArrayList<>();
     private Class serviceInterface;
+    private ReadWriteLock lock = new ReentrantReadWriteLock();
 
     private int index = 0;
 
     public void addServiceUrl(String interfaceName, LightServiceNodeData data) {
-        this.proxyEntries.add(new ServiceProxyEntry(interfaceName,data));
+        lock.writeLock().lock();
+        try {
+            this.proxyEntries.add(new ServiceProxyEntry(interfaceName, data));
+        }finally {
+            lock.writeLock().unlock();
+        }
     }
 
     public Class getServiceInterface() {
@@ -42,21 +50,30 @@ public class LightConsumeFactoryBean implements FactoryBean<Object>{
      */
     public void freshUrl(Map<String,LightServiceNodeData> children){
         log.info("刷新服务器列表……");
-        Iterator<ServiceProxyEntry> it = proxyEntries.iterator();
-        while (it.hasNext()) {
-            ServiceProxyEntry entry = it.next();
-            boolean isExist = children.keySet().stream().anyMatch(interfaceName->{return interfaceName.equalsIgnoreCase(entry.getServiceUrl());});
-            if(!isExist){
-                it.remove();
+        lock.writeLock().lock();
+        try {
+            Iterator<ServiceProxyEntry> it = proxyEntries.iterator();
+            while (it.hasNext()) {
+                ServiceProxyEntry entry = it.next();
+                boolean isExist = children.keySet().stream().anyMatch(interfaceName -> {
+                    return interfaceName.equalsIgnoreCase(entry.getServiceUrl());
+                });
+                if (!isExist) {
+                    it.remove();
+                }
             }
+            children.forEach((interfaceName, data) -> {
+                boolean isExist = proxyEntries.stream().anyMatch(entity -> {
+                    return entity.getServiceUrl().equalsIgnoreCase(interfaceName);
+                });
+                if (!isExist) {
+                    this.addServiceUrl(interfaceName, data);
+                }
+            });
+            log.info("服务器清单：" + proxyEntries.toString());
+        }finally {
+            lock.writeLock().unlock();
         }
-        children.forEach((interfaceName,data)->{
-            boolean isExist = proxyEntries.stream().anyMatch(entity->{return entity.getServiceUrl().equalsIgnoreCase(interfaceName);});
-            if(!isExist){
-                this.addServiceUrl(interfaceName,data);
-            }
-        });
-        log.info("服务器清单："+proxyEntries.toString());
     }
 
     @Override
@@ -88,20 +105,25 @@ public class LightConsumeFactoryBean implements FactoryBean<Object>{
             return result;
         }
 
-        private synchronized Object getSubject() {
-            if(proxyEntries.size()==0){
-                throw new RuntimeException("没有可用服务器……");
-            }
+        private Object getSubject() {
+            lock.readLock().lock();
+            try {
+                if (proxyEntries.size() == 0) {
+                    throw new RuntimeException("没有可用服务器……");
+                }
 
-            ServiceProxyEntry proxyEntry = LightConsumeFactoryBean.this.proxyEntries.get(index++% proxyEntries.size());
-            Object subject = proxyEntry.getServiceProxy();
-            if(subject==null){
-                subject = createBean(proxyEntry);
-                proxyEntry.setServiceProxy(subject);
-            }
+                ServiceProxyEntry proxyEntry = LightConsumeFactoryBean.this.proxyEntries.get(index++ % proxyEntries.size());
+                Object subject = proxyEntry.getServiceProxy();
+                if (subject == null) {
+                    subject = createBean(proxyEntry);
+                    proxyEntry.setServiceProxy(subject);
+                }
 
-            log.info("开始调用远程接口{}...",proxyEntry.getFullUrl());
-            return subject;
+                log.info("开始调用远程接口{}...", proxyEntry.getFullUrl());
+                return subject;
+            }finally {
+                lock.readLock().unlock();
+            }
         }
 
         private Object createBean(ServiceProxyEntry proxyEntry){
