@@ -53,23 +53,25 @@ public class LightConsumeFactoryBean implements FactoryBean<Object>{
         log.info("刷新服务器列表……");
         lock.writeLock().lock();
         try {
-            Iterator<ServiceProxyEntry> it = proxyEntries.iterator();
-            while (it.hasNext()) {
-                ServiceProxyEntry entry = it.next();
-                boolean isExist = children.keySet().stream().anyMatch(interfaceName -> {
-                    return interfaceName.equalsIgnoreCase(entry.getServiceUrl());
-                });
-                if (!isExist) {
-                    it.remove();
-                }
-            }
+
+//            Iterator<ServiceProxyEntry> it = proxyEntries.iterator();
+//            while (it.hasNext()) {
+//                ServiceProxyEntry entry = it.next();
+//                boolean isExist = children.keySet().stream().anyMatch(interfaceName -> {
+//                    return interfaceName.equalsIgnoreCase(entry.getServiceUrl());
+//                });
+//                if (!isExist) {
+//                    it.remove();
+//                }
+//            }
+            proxyEntries.clear();
             children.forEach((interfaceName, data) -> {
-                boolean isExist = proxyEntries.stream().anyMatch(entity -> {
-                    return entity.getServiceUrl().equalsIgnoreCase(interfaceName);
-                });
-                if (!isExist) {
-                    this.addServiceUrl(interfaceName, data);
-                }
+//                boolean isExist = proxyEntries.stream().anyMatch(entity -> {
+//                    return entity.getServiceUrl().equalsIgnoreCase(interfaceName);
+//                });
+//                if (!isExist) {
+                this.addServiceUrl(interfaceName, data);
+//                }
             });
             log.info("服务器清单：" + proxyEntries.toString());
         }finally {
