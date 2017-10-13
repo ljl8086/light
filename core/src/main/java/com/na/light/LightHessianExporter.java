@@ -1,5 +1,7 @@
 package com.na.light;
 
+import com.caucho.hessian.io.SerializerFactory;
+import com.na.light.hessian.BigDecimalSerializerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.remoting.caucho.HessianServiceExporter;
@@ -25,6 +27,12 @@ public class LightHessianExporter extends HessianServiceExporter {
      * 代理类的原始类。
      */
     private Class originalServiceCls;
+
+    public LightHessianExporter() {
+        SerializerFactory se = SerializerFactory.createDefault();
+        se.addFactory(new BigDecimalSerializerFactory());
+        super.setSerializerFactory(se);
+    }
 
     @Override
     protected ClassLoader getBeanClassLoader() {

@@ -1,6 +1,8 @@
 package com.na.light;
 
 
+import com.caucho.hessian.io.SerializerFactory;
+import com.na.light.hessian.BigDecimalSerializerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.framework.ProxyFactory;
@@ -142,6 +144,9 @@ public class LightConsumeFactoryBean implements FactoryBean<Object>{
             bean.setServiceUrl(proxyEntry.getFullUrl(lightRpcService));
             bean.setPassword(data.getToken());
             bean.setUsername("test");
+            SerializerFactory se = SerializerFactory.createDefault();
+            se.addFactory(new BigDecimalSerializerFactory());
+            bean.setSerializerFactory(se);
             log.info("远程调用接口注册成功：{}",proxyEntry.getFullUrl(lightRpcService));
             bean.prepare();
             return new ProxyFactory(serviceInterface, bean).getProxy(ClassUtils.getDefaultClassLoader());
