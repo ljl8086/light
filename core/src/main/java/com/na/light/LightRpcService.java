@@ -1,7 +1,5 @@
 package com.na.light;
 
-import org.springframework.core.annotation.AliasFor;
-
 import java.lang.annotation.*;
 
 /**
@@ -22,4 +20,10 @@ public @interface LightRpcService {
      * @return
      */
     String group() default "";
+
+    /**
+     * 服务过滤
+     * @return
+     */
+    String selector() default "";
 }

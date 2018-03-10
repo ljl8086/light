@@ -50,6 +50,7 @@ public class LightProvideZkClient {
                 data.setContextPath(lightRpcClient.group());
                 data.setVersion(1);
                 data.setGroup(lightRpcClient.group());
+                data.setSelector(lightRpcClient.selector());
                 data.setContextPath(contextPath);
                 data.setToken(item.getToken());
 

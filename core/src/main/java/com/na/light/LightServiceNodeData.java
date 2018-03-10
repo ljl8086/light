@@ -11,6 +11,7 @@ public class LightServiceNodeData implements Serializable {
 
     private String contextPath;
     private String group;
+    private String selector;
     private String serviceName;
     private int version;
     private String token;
@@ -33,6 +34,14 @@ public class LightServiceNodeData implements Serializable {
         if(group !=null && group.trim().length()>=0) {
             this.group = group.trim();
         }
+    }
+
+    public String getSelector() {
+        return selector;
+    }
+
+    public void setSelector(String selector) {
+        this.selector = selector;
     }
 
     public int getVersion() {

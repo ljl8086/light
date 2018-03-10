@@ -104,33 +104,78 @@ public class LightConsumeFactoryBean implements FactoryBean<Object>{
     class ProxyHandler implements InvocationHandler {
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            log.debug("开始");
             Object subject = getSubject();
+            log.debug("subject：" + subject);
 
-            Object result = method.invoke(subject, args);
+            Object result = null;
+            if(subject instanceof List) {
+                for(Object s : (List)subject) {
+                    result = method.invoke(subject, args);
+                }
+            } else {
+                result = method.invoke(subject, args);
+            }
+            LightConfig.setSelector(null);
             return result;
         }
 
         private Object getSubject() {
             lock.readLock().lock();
             try {
+                boolean isBalance = true;
+                ServiceProxyEntry proxyEntry = null;
+                List<ServiceProxyEntry> proxyEntries = new ArrayList<>();
+                String selector = String.valueOf(LightConfig.getThreadLocal().get());
+                log.debug("selector：" + selector);
+                if("".equals(selector) || "null".equals(selector)) {
+                    proxyEntries = LightConsumeFactoryBean.this.proxyEntries;
+                    isBalance = true;
+                } else if ("*".equals(selector)) {
+                    proxyEntries = LightConsumeFactoryBean.this.proxyEntries;
+                    isBalance = false;
+                } else {
+                    for(ServiceProxyEntry entry : LightConsumeFactoryBean.this.proxyEntries) {
+                        if(entry.data.getSelector().trim().startsWith(selector.trim())) {
+                            proxyEntries.add(entry);
+                        }
+                    }
+                    isBalance = true;
+                }
+
                 if (proxyEntries.size() == 0) {
                     throw new RuntimeException("没有可用服务器……");
                 }
-                ServiceProxyEntry proxyEntry = null;
 
-                synchronized (index) {
-                    index = index++ % proxyEntries.size();
-                    proxyEntry = LightConsumeFactoryBean.this.proxyEntries.get(index++ % proxyEntries.size());
+                Object subject = null;
+                if(isBalance) {
+                    synchronized (index) {
+                        index = index++ % proxyEntries.size();
+                        proxyEntry = proxyEntries.get(index++ % proxyEntries.size());
+                    }
+
+                    subject = proxyEntry.getServiceProxy();
+                    if (subject == null) {
+                        subject = createBean(proxyEntry);
+                        proxyEntry.setServiceProxy(subject);
+                    }
+
+                    log.info("开始调用远程接口{}...", proxyEntry.getFullUrl());
+                } else {
+                    subject = new ArrayList<>();
+                    for (ServiceProxyEntry entry : proxyEntries) {
+                        if (entry.getServiceProxy() == null) {
+                            entry.setServiceProxy(createBean(entry));
+                        }
+                        ((ArrayList)subject).add(entry.getServiceProxy());
+                        log.info("开始调用远程接口{}...", entry.getFullUrl());
+                    }
                 }
 
-                Object subject = proxyEntry.getServiceProxy();
-                if (subject == null) {
-                    subject = createBean(proxyEntry);
-                    proxyEntry.setServiceProxy(subject);
-                }
-
-                log.info("开始调用远程接口{}...", proxyEntry.getFullUrl());
                 return subject;
+            } catch (Exception e) {
+                log.error("", e);
+                return null;
             }finally {
                 lock.readLock().unlock();
             }
