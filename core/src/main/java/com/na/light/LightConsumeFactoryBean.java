@@ -104,9 +104,7 @@ public class LightConsumeFactoryBean implements FactoryBean<Object>{
     class ProxyHandler implements InvocationHandler {
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            log.debug("开始");
             Object subject = getSubject();
-            log.debug("subject：" + subject);
 
             Object result = null;
             if(subject instanceof List) {
@@ -127,7 +125,6 @@ public class LightConsumeFactoryBean implements FactoryBean<Object>{
                 ServiceProxyEntry proxyEntry = null;
                 List<ServiceProxyEntry> proxyEntries = new ArrayList<>();
                 String selector = String.valueOf(LightConfig.getThreadLocal().get());
-                log.debug("selector：" + selector);
                 if("".equals(selector) || "null".equals(selector)) {
                     proxyEntries = LightConsumeFactoryBean.this.proxyEntries;
                     isBalance = true;
