@@ -133,8 +133,11 @@ public class LightConsumeFactoryBean implements FactoryBean<Object>{
                     isBalance = false;
                 } else {
                     for(ServiceProxyEntry entry : LightConsumeFactoryBean.this.proxyEntries) {
-                        if(entry.data.getSelector().trim().startsWith(selector.trim())) {
-                            proxyEntries.add(entry);
+                        String [] selectors = entry.data.getSelector().trim().split(",");
+                        for (String s : selectors) {
+                            if(s.trim().startsWith(selector.trim())) {
+                                proxyEntries.add(entry);
+                            }
                         }
                     }
                     isBalance = true;
