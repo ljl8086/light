@@ -135,7 +135,7 @@ public class LightConsumeFactoryBean implements FactoryBean<Object>{
                     for(ServiceProxyEntry entry : LightConsumeFactoryBean.this.proxyEntries) {
                         String [] selectors = entry.data.getSelector().trim().split(",");
                         for (String s : selectors) {
-                            if(s.trim().startsWith(selector.trim())) {
+                            if(selector.trim().startsWith(s.trim())) {
                                 proxyEntries.add(entry);
                             }
                         }
@@ -173,9 +173,6 @@ public class LightConsumeFactoryBean implements FactoryBean<Object>{
                 }
 
                 return subject;
-            } catch (Exception e) {
-                log.error("", e);
-                return null;
             }finally {
                 lock.readLock().unlock();
             }

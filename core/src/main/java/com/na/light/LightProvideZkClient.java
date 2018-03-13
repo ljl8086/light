@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.EmbeddedValueResolverAware;
+import org.springframework.util.StringValueResolver;
 
 import javax.annotation.PostConstruct;
 import java.util.Map;
@@ -14,12 +16,14 @@ import java.util.Map;
  * 服务提供方向配置中心注册组件。
  * Created by sunny on 2017/8/10 0010.
  */
-public class LightProvideZkClient {
+public class LightProvideZkClient implements EmbeddedValueResolverAware {
     private Logger log = LoggerFactory.getLogger(this.getClass());
     @Autowired
     private ZkClient zkClient;
     @Autowired
     private ApplicationContext applicationContext;
+
+    private StringValueResolver embeddedValueResolver;
 
     @PostConstruct
     public void init(){
@@ -50,7 +54,15 @@ public class LightProvideZkClient {
                 data.setContextPath(lightRpcClient.group());
                 data.setVersion(1);
                 data.setGroup(lightRpcClient.group());
-                data.setSelector(lightRpcClient.selector());
+
+                StringBuilder selector = new StringBuilder();
+                for(String s : lightRpcClient.selector().split(",")) {
+                    if(s != null && !"".equals(s.trim())) {
+                        selector.append(embeddedValueResolver.resolveStringValue(s)).append(",");
+                    }
+                }
+
+                data.setSelector(selector.toString());
                 data.setContextPath(contextPath);
                 data.setToken(item.getToken());
 
@@ -61,5 +73,10 @@ public class LightProvideZkClient {
                 log.error(e.getMessage(),e);
             }
         });
+    }
+
+    @Override
+    public void setEmbeddedValueResolver(StringValueResolver resolver) {
+        this.embeddedValueResolver = resolver;
     }
 }
