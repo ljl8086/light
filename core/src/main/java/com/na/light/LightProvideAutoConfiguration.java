@@ -77,7 +77,6 @@ public class LightProvideAutoConfiguration implements ApplicationContextAware,Be
             for (BeanDefinitionHolder holder : beanDefinitions) {
                 try {
                     GenericBeanDefinition definition = (GenericBeanDefinition) holder.getBeanDefinition();
-                    String token = UUID.randomUUID().toString().replace("-","");
                     Class remoteCls = remoteCls = Class.forName(definition.getBeanClassName());;
 
                     definition.setAutowireCandidate(true);
@@ -86,6 +85,10 @@ public class LightProvideAutoConfiguration implements ApplicationContextAware,Be
                     LightRpcService rpcService = (LightRpcService)remoteCls.getAnnotation(LightRpcService.class);
                     String remoteName = rpcService.value().trim()=="" ? remoteCls.getName() : rpcService.value();
                     String group = rpcService.group().trim()=="" ? "" : "/"+rpcService.group();
+
+                    String fixToken = applicationContext.getEnvironment().getProperty("spring.light.server."+rpcService.value()+".token");
+                    log.info("fixToken:"+fixToken);
+                    String token = fixToken==null || fixToken.trim()=="" ? UUID.randomUUID().toString().replace("-","") : fixToken.trim();
 
                     Object remoteObj = new RuntimeBeanReference(holder.getBeanName());
                     String name = group+"/"+remoteName;
